@@ -31,10 +31,12 @@ function App() {
   return (
     <div>
       <h1>My Hacker Stories</h1>
-      <label htmlFor="search"></label>
-      <input id="search" type="text"></input>
+      <Search />
+
       <hr />
 
+      <List />
+      <List />
       <List />
     </div>
   );
@@ -56,6 +58,16 @@ function List() {
         );
       })}
     </ul>
+  );
+}
+
+function Search() {
+  return (
+    <div>
+      {" "}
+      <label htmlFor="search"></label>
+      <input id="search" type="text"></input>
+    </div>
   );
 }
 
