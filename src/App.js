@@ -27,7 +27,7 @@ const list = [
   },
 ];
 
-function App() {
+const app = () => {
   return (
     <div>
       <h1>My Hacker Stories</h1>
@@ -40,9 +40,9 @@ function App() {
       <List />
     </div>
   );
-}
+};
 
-function List() {
+const List = () => {
   return (
     <ul>
       {list.map(function (item) {
@@ -59,9 +59,9 @@ function List() {
       })}
     </ul>
   );
-}
+};
 
-function Search() {
+const Search = () => {
   return (
     <div>
       {" "}
@@ -69,6 +69,6 @@ function Search() {
       <input id="search" type="text"></input>
     </div>
   );
-}
+};
 
 export default App;
