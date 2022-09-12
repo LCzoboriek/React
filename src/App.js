@@ -1,6 +1,8 @@
 import * as React from "react";
 
 const App = () => {
+  const [searchTerm, setSearchTerm] = React.useState(""); // Remember that in the useState function, the first const is the current state, and the second part is the state to be updating the current state. So in this case, whatever
+  //is typed is set to setSearchTerm, which then updates searchTerm
   const stories = [
     {
       title: "React",
@@ -19,42 +21,40 @@ const App = () => {
       objectID: 1,
     },
   ];
+
+  const handleSearch = (event) => {
+    //We are now instantiating the searchTerms state here, as we want to filter the stories within app,
+    //which is then passed up via a callback handler, from the search component to the app component (child to parent)
+    setSearchTerm(event.target.value);
+    console.log(event.target.value);
+  };
+
+  const searchedStories = stories.filter(function (story) {
+    return story.title.toLowerCase().includes(searchTerm.toLowerCase());
+  }); // We then use the filter function, which takes the argument of story as its parameter, and returns itself if the attribute of title, includes the updated state from above
   console.log("App renders");
   return (
     <div>
       <h1>My Hacker Stories</h1>
 
-      <Search />
+      <Search onSearch={handleSearch} />
+      {/* Here is where the props is set  */}
 
       <hr />
 
-      <List list={stories} />
+      <List list={searchedStories} />
+      {/* We then update the html/jsx entry to now display only the searched stories, which is set via the above methods/functions */}
     </div>
   );
 };
 
-const Search = () => {
-  const [searchTerm, setSearchTerm] = React.useState(""); // First part is the initial value of the useState, second is the updated state, you set this updated state by
-  //having an input section like below, where onChange of the input field, it starts the handleChange function, this then has an event handler, which its value is the target, this value
-  //Is then passed onto the above section, and then updates the searchTerm part when no more changes has occured, which then refreshes the section below contained within the <strong> part
-  //The process that happens is when the user types into the input field, the input fields change event runs into the event handler, which is below
-  const handleChange = (event) => {
-    //The handlers logic then uses the events value of the target (in this case searchTerm), and the state updater function (setSearchTerm), to set the updated state.
-    setSearchTerm(event.target.value);
-  };
-  //Afterwards the component re-renders (the component function runs) the updated state becomes the current state (here: searchTerm) and is then rendered onto the screen in JSX, see below where
-  //Searching for <strong>{searchTerm}</strong> is, this updates in real time, as the userState updates. When its no longer updating, the component stops re rendering.
-  console.log("Search Renders");
-  return (
-    <div>
-      <label htmlFor="search">Search: </label>
-      <input id="search" type="text" onChange={handleChange} />
-      <p>
-        Searching for <strong>{searchTerm}</strong>
-      </p>
-    </div>
-  );
-};
+const Search = (props) => (
+  <div>
+    <label htmlFor="search">Search: </label>
+    <input id="search" type="text" onChange={props.onSearch} />
+    {/* Call back handler here, this is done via the onChange state handler, which passes up the props from the part on line 34 */}
+  </div>
+);
 
 const List = (props) => {
   console.log("list renders");
