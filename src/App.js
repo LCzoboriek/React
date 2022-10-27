@@ -1,9 +1,32 @@
 import * as React from "react";
+import { v4 as uuidv4 } from "uuid";
+
+const useStorageState = (key, initialState) => {
+  const [value, setValue] = React.useState(
+    localStorage.getItem(key) ?? initialState
+  );
+
+  React.useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [value, key]); // When the dependency array attribute/variable changes, it will trigger the side effect localStorage.setItem("search", searchTerm)
+  //It works really similarly to a useState, the second part in the arguments is the newly updated variable, and the search is the current state, which gets
+  //updated
+
+  return [value, setValue];
+};
 
 const App = () => {
-  const [searchTerm, setSearchTerm] = React.useState("React"); //This is called controller components within react, this sets the default state to being something specific
-  //we do this as it enforces a predictable behaviour.
-  const stories = [
+  // const [searchTerm, setSearchTerm] = React.useState(
+  //   localStorage.getItem("search") ?? "React" //Doing this will sync the browsers storage with reacts state, if the storage exists,
+  //   //itll display that, if not, itll default to React, this is a shorthand truthy operation, this however introduces
+  //   //a side effect, this is when the React.useEffect hook comines into play to trigger the wanted side-effect, each time the searchTerm changes
+  // );
+
+  // React.useEffect(() => {
+  //   localStorage.setItem("search", searchTerm);
+  // }, [searchTerm]);
+
+  const initialStories = [
     {
       title: "React",
       url: "https://reactjs.org/",
@@ -22,9 +45,51 @@ const App = () => {
     },
   ];
 
+  const getAsyncStories = () =>
+    new Promise((resolve) =>
+      setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
+    );
+
+  const [searchTerm, setSearchTerm] = useStorageState("search", "React");
+
+  const [stories, setStories] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsLoading(true);
+    getAsyncStories()
+      .then((result) => {
+        setStories(result.data.stories);
+        setIsLoading(false);
+      })
+      .catch(() => setIsError(true));
+  }, []);
+
+  //This above makes the list stateful, making it dynamic and to be added to
+  //We also need to make the input field for things to be added dynamic as well
+  const [name, setName] = React.useState("");
+  //We then add an event handler for the input field along with an attribute for calling the function
+  function handleChange(event) {
+    setName(event.target.value);
+  }
+
+  function handleAdd() {
+    const newList = stories.concat({ name, id: uuidv4() });
+    setStories(newList);
+    setName("");
+  }
+
+  const handleRemoveStory = (item) => {
+    const newStories = stories.filter(
+      (story) => item.objectID !== story.objectID
+    );
+
+    setStories(newStories);
+  };
+
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
-    console.log(event.target.value);
   };
 
   const searchedStories = stories.filter(function (story) {
@@ -34,42 +99,97 @@ const App = () => {
   return (
     <div>
       <h1>My Hacker Stories</h1>
-
-      <Search search={searchTerm} onSearch={handleSearch} />
+      <div></div>
+      <InputWithLabel
+        id="search"
+        label="Search"
+        value={searchTerm}
+        isFocused
+        onInputChange={handleSearch}
+      >
+        <strong>Search here:</strong>
+      </InputWithLabel>
+      <br />
+      <br />
+      <strong>Enter book to add:</strong>
+      <input type="text" value={name} onChange={handleChange} />
+      {/* Heres where we have added the event handler tag with passing up the name attribute */}
+      <button type="button" onClick={handleAdd}>
+        Add
+      </button>
 
       <hr />
-
-      <List list={searchedStories} />
+      {isError && <p>Something went wrong...</p>}
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : (
+        <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      )}
     </div>
   );
 };
 
-const Search = (
-  { search, onSearch } //Here we have desrctured the props object right away in the function signature of the component which enabled us to omite the functions block body of the component still
-) => (
-  <div>
-    <label htmlFor="search">Search: </label>
-    <input id="search" type="text" value={search} onChange={onSearch} />
-  </div>
-);
+const InputWithLabel = ({
+  id,
+  value,
+  type = "text",
+  onInputChange,
+  isFocused,
+  children,
+}) => {
+  const inputRef = React.useRef();
 
-const List = ({ list }) => (
+  React.useEffect(() => {
+    if (isFocused && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isFocused]);
+  return (
+    <>
+      <label htmlFor={id}>{children}</label>
+      &nbsp;
+      <input
+        ref={inputRef}
+        id={id}
+        type={type}
+        value={value}
+        onChange={onInputChange}
+        autoFocus={isFocused}
+      />
+    </>
+  );
+};
+
+const List = ({ list, onRemoveItem }) => (
   <ul>
     {list.map((item) => (
-      <Item key={item.objectID} item={item} />
+      <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
     ))}
   </ul>
 );
 
-const Item = ({ item }) => (
-  <li>
-    <span>
-      <a href={item.url}>{item.title}</a>
-    </span>
-    <span>{item.author}</span>
-    <span>{item.num_comments}</span>
-    <span>{item.points}</span>
-  </li>
-);
-
+const Item = ({ item, onRemoveItem }) => {
+  const handleRemoveItem = () => {
+    onRemoveItem(item);
+  };
+  return (
+    <li>
+      <span>
+        <a href={item.url}>{item.title}</a>
+      </span>
+      <br />
+      <span> Author/s: {item.author}</span>
+      <br />
+      <span>Number of comments: {item.num_comments}</span>
+      <br />
+      <span>Rating: {item.points} </span>
+      <br />
+      <span>
+        <button type="button" onClick={handleRemoveItem}>
+          Dismiss
+        </button>
+      </span>
+    </li>
+  );
+};
 export default App;
