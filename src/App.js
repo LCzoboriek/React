@@ -49,7 +49,15 @@ const useStorageState = (key, initialState) => {
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "react");
+  const [url, setUrl] = React.useState(`${API_ENDPOINT}${searchTerm}`);
 
+  const handleSearchInput = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
+  };
   const [stories, dispatchStories] = React.useReducer(storiesReducer, {
     data: [],
     isLoading: false,
@@ -57,10 +65,9 @@ const App = () => {
   });
 
   const handleFetchStories = React.useCallback(() => {
-    if (searchTerm === "") return;
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    fetch(`${API_ENDPOINT}${searchTerm}`)
+    fetch(url)
       .then((response) => response.json())
       .then((result) => {
         dispatchStories({
@@ -69,7 +76,7 @@ const App = () => {
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_FAILURE" }));
-  }, [searchTerm]);
+  }, [url]);
   //When search term now changes, the useCallback hook will be called again and the handleFetchStories function will be recreated. This way, the useEffect hook will be called again and the fetch request will be executed again.
   //this only occurs when an item in the dependency array changes. If the dependency array is empty, the function will only be called once.
   //useCallback is a performance optimization. It is not necessary to use it in every case.
@@ -85,14 +92,6 @@ const App = () => {
     });
   };
 
-  const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const searchedStories = stories.data.filter((story) =>
-    story.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div>
       <h1>My Hacker Stories</h1>
@@ -101,10 +100,13 @@ const App = () => {
         id="search"
         value={searchTerm}
         isFocused
-        onInputChange={handleSearch}
+        onInputChange={handleSearchInput}
       >
         <strong>Search:</strong>
       </InputWithLabel>
+      <button type="button" disabled={!searchTerm} onClick={handleSearchSubmit}>
+        Submit
+      </button>
 
       <hr />
 
