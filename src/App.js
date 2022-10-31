@@ -56,7 +56,7 @@ const App = () => {
     isError: false,
   });
 
-  React.useEffect(() => {
+  const handleFetchStories = React.useCallback(() => {
     if (searchTerm === "") return;
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
@@ -70,6 +70,13 @@ const App = () => {
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_FAILURE" }));
   }, [searchTerm]);
+  //When search term now changes, the useCallback hook will be called again and the handleFetchStories function will be recreated. This way, the useEffect hook will be called again and the fetch request will be executed again.
+  //this only occurs when an item in the dependency array changes. If the dependency array is empty, the function will only be called once.
+  //useCallback is a performance optimization. It is not necessary to use it in every case.
+
+  React.useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]);
 
   const handleRemoveStory = (item) => {
     dispatchStories({
