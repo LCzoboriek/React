@@ -1,6 +1,5 @@
 import * as React from "react";
-
-const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
+import axios from "axios";
 
 const storiesReducer = (state, action) => {
   switch (action.type) {
@@ -47,17 +46,13 @@ const useStorageState = (key, initialState) => {
   return [value, setValue];
 };
 
+const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
+
 const App = () => {
-  const [searchTerm, setSearchTerm] = useStorageState("search", "react");
+  const [searchTerm, setSearchTerm] = useStorageState("search", "React");
+
   const [url, setUrl] = React.useState(`${API_ENDPOINT}${searchTerm}`);
 
-  const handleSearchInput = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleSearchSubmit = () => {
-    setUrl(`${API_ENDPOINT}${searchTerm}`);
-  };
   const [stories, dispatchStories] = React.useReducer(storiesReducer, {
     data: [],
     isLoading: false,
@@ -67,19 +62,16 @@ const App = () => {
   const handleFetchStories = React.useCallback(() => {
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    fetch(url)
-      .then((response) => response.json())
+    axios
+      .get(url)
       .then((result) => {
         dispatchStories({
           type: "STORIES_FETCH_SUCCESS",
-          payload: result.hits,
+          payload: result.data.hits,
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_FAILURE" }));
   }, [url]);
-  //When search term now changes, the useCallback hook will be called again and the handleFetchStories function will be recreated. This way, the useEffect hook will be called again and the fetch request will be executed again.
-  //this only occurs when an item in the dependency array changes. If the dependency array is empty, the function will only be called once.
-  //useCallback is a performance optimization. It is not necessary to use it in every case.
 
   React.useEffect(() => {
     handleFetchStories();
@@ -90,6 +82,14 @@ const App = () => {
       type: "REMOVE_STORY",
       payload: item,
     });
+  };
+
+  const handleSearchInput = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
   };
 
   return (
@@ -104,6 +104,7 @@ const App = () => {
       >
         <strong>Search:</strong>
       </InputWithLabel>
+
       <button type="button" disabled={!searchTerm} onClick={handleSearchSubmit}>
         Submit
       </button>
