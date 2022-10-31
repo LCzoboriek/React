@@ -48,7 +48,7 @@ const useStorageState = (key, initialState) => {
 };
 
 const App = () => {
-  const [searchTerm, setSearchTerm] = useStorageState("search", "");
+  const [searchTerm, setSearchTerm] = useStorageState("search", "react");
 
   const [stories, dispatchStories] = React.useReducer(storiesReducer, {
     data: [],
@@ -57,6 +57,7 @@ const App = () => {
   });
 
   React.useEffect(() => {
+    if (searchTerm === "") return;
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
     fetch(`${API_ENDPOINT}${searchTerm}`)
@@ -68,7 +69,7 @@ const App = () => {
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_FAILURE" }));
-  }, []);
+  }, [searchTerm]);
 
   const handleRemoveStory = (item) => {
     dispatchStories({
@@ -105,7 +106,7 @@ const App = () => {
       {stories.isLoading ? (
         <p>Loading ...</p>
       ) : (
-        <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+        <List list={stories.data} onRemoveItem={handleRemoveStory} />
       )}
     </div>
   );
