@@ -48,7 +48,7 @@ const useStorageState = (key, initialState) => {
 };
 
 const App = () => {
-  const [searchTerm, setSearchTerm] = useStorageState("search", "React");
+  const [searchTerm, setSearchTerm] = useStorageState("search", "");
 
   const [stories, dispatchStories] = React.useReducer(storiesReducer, {
     data: [],
@@ -59,7 +59,7 @@ const App = () => {
   React.useEffect(() => {
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    fetch(`${API_ENDPOINT}react`)
+    fetch(`${API_ENDPOINT}${searchTerm}`)
       .then((response) => response.json())
       .then((result) => {
         dispatchStories({
